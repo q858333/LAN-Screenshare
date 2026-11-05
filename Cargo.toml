@@ -1,0 +1,26 @@
+[workspace]
+resolver = "2"
+members = [
+  "apps/desktop/src-tauri",
+  "crates/lan-share-core",
+  "crates/lan-share-capture",
+  "crates/lan-share-stream",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+authors = ["lan-screenshare"]
+
+[workspace.dependencies]
+lan-share-core = { path = "crates/lan-share-core" }
+lan-share-capture = { path = "crates/lan-share-capture" }
+lan-share-stream = { path = "crates/lan-share-stream" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "net", "time"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+anyhow = "1"

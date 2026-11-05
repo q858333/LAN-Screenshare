@@ -1,0 +1,61 @@
+name: Release installers
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build-tauri:
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-14
+            args: --target aarch64-apple-darwin
+            artifact: macOS-AppleSilicon
+          - platform: macos-14
+            args: --target x86_64-apple-darwin
+            artifact: macOS-Intel
+          - platform: windows-latest
+            args: ""
+            artifact: Windows-x64
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/desktop/package-lock.json
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Add macOS Intel Rust target
+        if: matrix.artifact == 'macOS-Intel'
+        run: rustup target add x86_64-apple-darwin
+
+      - name: Install frontend deps
+        working-directory: apps/desktop
+        run: npm ci
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: apps/desktop
+          args: ${{ matrix.args }}
+          tagName: ${{ github.ref_name }}
+          releaseName: LAN Screenshare ${{ github.ref_name }}
+          releaseBody: |
+            - **macOS Apple Silicon**: `.dmg` (aarch64)
+            - **macOS Intel**: `.dmg` (x86_64)
+            - **Windows**: NSIS `.exe` installer
+          releaseDraft: true
+          prerelease: false

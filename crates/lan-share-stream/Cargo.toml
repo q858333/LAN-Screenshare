@@ -1,0 +1,23 @@
+[package]
+name = "lan-share-stream"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+lan-share-core = { workspace = true }
+lan-share-capture = { workspace = true }
+anyhow = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+futures-util = "0.3"
+tokio-tungstenite = "0.24"
+if-addrs = "0.13"
+webrtc = "0.11"
+openh264 = { version = "0.6", features = ["source"] }
+jpeg-encoder = "0.6"
+bytes = "1"
+base64 = "0.22"
+tokio-util = { version = "0.7", features = ["codec"] }
+

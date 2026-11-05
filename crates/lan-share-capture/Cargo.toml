@@ -1,0 +1,16 @@
+[package]
+name = "lan-share-capture"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+lan-share-core = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+
+[target.'cfg(windows)'.dependencies]
+scrap = "0.5"
+cpal = "0.15"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+scrap = "0.5"

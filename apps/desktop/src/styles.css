@@ -1,0 +1,118 @@
+:root {
+  color-scheme: dark;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: #0f1115;
+  color: #e8eaed;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+#app {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 3rem;
+}
+
+h1 {
+  font-size: 1.5rem;
+  font-weight: 650;
+  margin: 0 0 0.25rem;
+}
+
+.sub {
+  color: #9aa0a6;
+  margin: 0 0 1.5rem;
+  font-size: 0.95rem;
+}
+
+.card {
+  background: #171a21;
+  border: 1px solid #2a2f3a;
+  border-radius: 12px;
+  padding: 1.25rem 1.35rem;
+  margin-bottom: 1rem;
+}
+
+.row {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 0.75rem;
+}
+
+label {
+  display: block;
+  font-size: 0.85rem;
+  color: #9aa0a6;
+  margin-bottom: 0.35rem;
+}
+
+input[type="text"],
+input[type="number"] {
+  width: 100%;
+  padding: 0.55rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid #3c4454;
+  background: #0f1115;
+  color: inherit;
+}
+
+button {
+  border: none;
+  border-radius: 8px;
+  padding: 0.55rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: #3b82f6;
+  color: #fff;
+}
+
+button.secondary {
+  background: #2a2f3a;
+  color: #e8eaed;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.tabs button {
+  background: #2a2f3a;
+}
+
+.tabs button.active {
+  background: #3b82f6;
+}
+
+.status {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85rem;
+  white-space: pre-wrap;
+  color: #c4c7c5;
+  margin-top: 0.75rem;
+}
+
+.badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  background: #243044;
+  color: #93c5fd;
+  margin-left: 0.35rem;
+}
