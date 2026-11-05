@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LAN 屏幕共享 · 网页观看</title>
+    <link rel="stylesheet" href="/viewer.css" />
+  </head>
+  <body>
+    <main>
+      <h1>LAN 屏幕共享 <span class="tag">网页观看</span></h1>
+      <p class="hint">
+        由分享端桌面应用提供画面。首次连接若提示证书不受信任，请选择继续访问（局域网自签名证书）。
+      </p>
+      <div id="status" class="status">正在连接信令…</div>
+      <video id="video" autoplay playsinline muted></video>
+      <p class="foot">仅观看 · 无远程控制 · 系统声音尚未支持</p>
+    </main>
+    <script src="/viewer.js"></script>
+  </body>
+</html>

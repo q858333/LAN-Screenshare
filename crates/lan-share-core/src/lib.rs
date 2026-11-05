@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 pub const DEFAULT_SIGNALING_PORT: u16 = 17890;
+pub const DEFAULT_WEB_PORT: u16 = 17891;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -33,6 +34,7 @@ pub enum SignalingMessage {
 pub struct HostSessionConfig {
     pub display_name: String,
     pub port: u16,
+    pub web_port: u16,
     pub include_audio: bool,
     pub target_fps: u32,
     pub max_width: u32,
@@ -43,6 +45,7 @@ impl Default for HostSessionConfig {
         Self {
             display_name: hostname(),
             port: DEFAULT_SIGNALING_PORT,
+            web_port: DEFAULT_WEB_PORT,
             include_audio: true,
             target_fps: 30,
             max_width: 1280,

@@ -16,6 +16,8 @@ struct HostStatus {
     running: bool,
     addresses: Vec<String>,
     port: u16,
+    web_port: u16,
+    web_viewer_urls: Vec<String>,
 }
 
 #[derive(Serialize)]
@@ -63,12 +65,16 @@ fn host_status(state: State<'_, AppState>) -> Result<HostStatus, String> {
             running: true,
             addresses: h.lan_addresses(),
             port: h.port(),
+            web_port: h.web_port(),
+            web_viewer_urls: h.web_viewer_urls(),
         })
     } else {
         Ok(HostStatus {
             running: false,
             addresses: vec![],
             port: lan_share_core::DEFAULT_SIGNALING_PORT,
+            web_port: lan_share_core::DEFAULT_WEB_PORT,
+            web_viewer_urls: vec![],
         })
     }
 }

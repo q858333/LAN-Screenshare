@@ -8,6 +8,8 @@ interface HostStatus {
   running: boolean;
   addresses: string[];
   port: number;
+  web_port: number;
+  web_viewer_urls: string[];
 }
 
 interface ViewerStatus {
@@ -126,8 +128,11 @@ async function refreshStatus() {
       el.textContent = "尚未启动";
       return;
     }
-    const lines = st.addresses.map((a) => `观看端连接：${a}:${st.port}`).join("\n");
-    el.textContent = `分享中\n${lines}`;
+    const desktop = st.addresses.map((a) => `桌面观看端：${a}:${st.port}`).join("\n");
+    const web = st.web_viewer_urls.length
+      ? st.web_viewer_urls.map((u) => `网页观看：${u}`).join("\n")
+      : `网页观看：https://<分享端IP>:${st.web_port}`;
+    el.textContent = `分享中\n${desktop}\n${web}`;
   } else {
     const st = await invoke<ViewerStatus>("viewer_status");
     const el = document.getElementById("viewer-status");

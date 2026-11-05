@@ -20,4 +20,9 @@ jpeg-encoder = "0.6"
 bytes = "1"
 base64 = "0.22"
 tokio-util = { version = "0.7", features = ["codec"] }
+axum = { version = "0.7", features = ["ws"] }
+axum-server = { version = "0.7", features = ["tls-rustls"] }
+rustls = { version = "0.23", features = ["ring"] }
+rcgen = "0.13"
+tower-http = { version = "0.6", features = ["cors"] }
 

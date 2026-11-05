@@ -1,7 +1,9 @@
 mod host;
 mod media;
 mod net;
+mod session;
 mod viewer;
+mod web_portal;
 mod webrtc;
 
 pub use host::{HostSession, HostSessionHandle};

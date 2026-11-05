@@ -1,0 +1,53 @@
+:root {
+  color-scheme: dark;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: #0f1115;
+  color: #e8eaed;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 2rem;
+}
+
+h1 {
+  font-size: 1.35rem;
+  margin: 0 0 0.5rem;
+}
+
+.tag {
+  font-size: 0.75rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  background: #243044;
+  color: #93c5fd;
+  vertical-align: middle;
+}
+
+.hint,
+.foot {
+  color: #9aa0a6;
+  font-size: 0.9rem;
+}
+
+.status {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 0.85rem;
+  margin: 1rem 0;
+  white-space: pre-wrap;
+  color: #c4c7c5;
+}
+
+#video {
+  width: 100%;
+  max-height: 75vh;
+  background: #000;
+  border-radius: 10px;
+  border: 1px solid #2a2f3a;
+}
