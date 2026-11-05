@@ -10,6 +10,9 @@ jobs:
   build-tauri:
     permissions:
       contents: write
+    env:
+      # Avoid NASM/asm assembly issues on Windows CI when building OpenH264.
+      OPENH264_NO_ASM: "1"
     strategy:
       fail-fast: false
       matrix:
@@ -37,9 +40,28 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
 
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            apps/desktop/src-tauri
+            crates
+
       - name: Add macOS Intel Rust target
         if: matrix.artifact == 'macOS-Intel'
         run: rustup target add x86_64-apple-darwin
+
+      - name: Setup NASM (Windows)
+        if: matrix.platform == 'windows-latest'
+        uses: ilammy/setup-nasm@v1
+
+      - name: Setup MSBuild (Windows)
+        if: matrix.platform == 'windows-latest'
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Enable long paths (Windows)
+        if: matrix.platform == 'windows-latest'
+        shell: pwsh
+        run: git config --global core.longpaths true
 
       - name: Install frontend deps
         working-directory: apps/desktop

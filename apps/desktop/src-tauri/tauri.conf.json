@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "LAN Screenshare",
+  "productName": "LAN-Screenshare",
   "version": "0.1.0",
   "identifier": "com.lanscreenshare.desktop",
   "build": {
