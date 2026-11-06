@@ -4,18 +4,30 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>LAN 屏幕共享 · 网页观看</title>
-    <link rel="stylesheet" href="/viewer.css" />
+    <link rel="stylesheet" href="viewer.css" />
   </head>
   <body>
     <main>
       <h1>LAN 屏幕共享 <span class="tag">网页观看</span></h1>
       <p class="hint">
-        由分享端桌面应用提供画面。首次连接若提示证书不受信任，请选择继续访问（局域网自签名证书）。
+        分享端需运行桌面客户端并<strong>启动分享</strong>。连接 <code>wss://分享端IP:17891</code> 时若提示证书不受信任，在浏览器中允许继续即可。
       </p>
-      <div id="status" class="status">正在连接信令…</div>
+      <div class="connect-row">
+        <div class="field">
+          <label for="host-input">分享端 IP</label>
+          <input id="host-input" type="text" placeholder="例如 192.168.1.12" autocomplete="off" />
+        </div>
+        <div class="field field-narrow">
+          <label for="port-input">端口</label>
+          <input id="port-input" type="number" value="17891" min="1" max="65535" />
+        </div>
+        <button type="button" id="connect-btn">连接</button>
+        <button type="button" id="disconnect-btn" class="secondary">断开</button>
+      </div>
+      <div id="status" class="status">请输入分享端 IP 并点击连接</div>
       <video id="video" autoplay playsinline muted></video>
       <p class="foot">仅观看 · 无远程控制 · 系统声音尚未支持</p>
     </main>
-    <script src="/viewer.js"></script>
+    <script src="viewer.js"></script>
   </body>
 </html>

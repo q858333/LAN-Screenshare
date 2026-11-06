@@ -1,41 +1,67 @@
+const DEFAULT_WSS_PORT = 17891;
+
 const statusEl = document.getElementById("status");
 const video = document.getElementById("video");
+const hostInput = document.getElementById("host-input");
+const portInput = document.getElementById("port-input");
+const connectBtn = document.getElementById("connect-btn");
+const disconnectBtn = document.getElementById("disconnect-btn");
+
+let ws;
+let pc;
 
 function setStatus(text) {
   statusEl.textContent = text;
 }
 
-const pc = new RTCPeerConnection({
-  iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
-});
+function isGitHubPages() {
+  const h = location.hostname;
+  return h.endsWith("github.io") || h.endsWith("githubusercontent.com");
+}
 
-pc.ontrack = (ev) => {
-  if (ev.streams[0]) {
-    video.srcObject = ev.streams[0];
-    video.muted = false;
-    setStatus("正在播放视频流…");
-  }
-};
+function embeddedPortalHost() {
+  if (isGitHubPages()) return null;
+  const port = Number(location.port || (location.protocol === "https:" ? 443 : 80));
+  if (port === DEFAULT_WSS_PORT) return location.hostname;
+  return null;
+}
 
-pc.onicecandidate = (ev) => {
-  if (!ev.candidate || !ws || ws.readyState !== WebSocket.OPEN) return;
-  ws.send(
-    JSON.stringify({
-      type: "ice_candidate",
-      candidate: ev.candidate.candidate,
-      sdp_mid: ev.candidate.sdpMid,
-      sdp_mline_index: ev.candidate.sdpMLineIndex,
-    }),
-  );
-};
+function createPeerConnection() {
+  const conn = new RTCPeerConnection({
+    iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+  });
 
-pc.onconnectionstatechange = () => {
-  setStatus(`WebRTC 状态：${pc.connectionState}`);
-};
+  conn.ontrack = (ev) => {
+    if (ev.streams[0]) {
+      video.srcObject = ev.streams[0];
+      video.muted = false;
+      setStatus("正在播放视频流…");
+    }
+  };
 
-const wsScheme = location.protocol === "https:" ? "wss:" : "ws:";
-const wsUrl = `${wsScheme}//${location.host}/ws`;
-let ws;
+  conn.onicecandidate = (ev) => {
+    if (!ev.candidate || !ws || ws.readyState !== WebSocket.OPEN) return;
+    ws.send(
+      JSON.stringify({
+        type: "ice_candidate",
+        candidate: ev.candidate.candidate,
+        sdp_mid: ev.candidate.sdpMid,
+        sdp_mline_index: ev.candidate.sdpMLineIndex,
+      }),
+    );
+  };
+
+  conn.onconnectionstatechange = () => {
+    appendStatus(`WebRTC：${conn.connectionState}`);
+  };
+
+  return conn;
+}
+
+function appendStatus(line) {
+  const prev = statusEl.textContent.trim();
+  statusEl.textContent = prev ? `${prev}\n${line}` : line;
+}
 
 async function handleMessage(raw) {
   const msg = JSON.parse(raw);
@@ -50,7 +76,7 @@ async function handleMessage(raw) {
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
       ws.send(JSON.stringify({ type: "answer", sdp: answer.sdp }));
-      setStatus((s) => `${s}\n已发送 Answer，等待媒体…`);
+      appendStatus("已发送 Answer，等待媒体…");
       break;
     case "ice_candidate":
       if (!msg.candidate) break;
@@ -72,17 +98,60 @@ async function handleMessage(raw) {
   }
 }
 
+function disconnect() {
+  if (ws) {
+    ws.close();
+    ws = undefined;
+  }
+  if (pc) {
+    pc.close();
+    pc = undefined;
+  }
+  video.srcObject = null;
+}
+
 function connect() {
+  const host = hostInput.value.trim();
+  const port = Number(portInput.value) || DEFAULT_WSS_PORT;
+  if (!host) {
+    setStatus("请输入分享端 IP");
+    return;
+  }
+
+  disconnect();
+  pc = createPeerConnection();
+
+  const wsUrl = `wss://${host}:${port}/ws`;
+  setStatus(`正在连接 ${wsUrl} …`);
+
   ws = new WebSocket(wsUrl);
   ws.onopen = () => {
-    setStatus("信令已连接，等待 HostInfo…");
+    appendStatus("信令已连接，等待 HostInfo…");
     ws.send(
       JSON.stringify({ type: "hello", role: "viewer", name: "WebViewer" }),
     );
   };
   ws.onmessage = (ev) => void handleMessage(ev.data);
-  ws.onclose = () => setStatus("信令连接已关闭");
-  ws.onerror = () => setStatus("信令连接失败，请确认分享端已启动且使用 HTTPS 打开本页");
+  ws.onclose = () => appendStatus("信令连接已关闭");
+  ws.onerror = () =>
+    setStatus(
+      `信令连接失败。\n请确认：\n1. 分享端已「启动分享」\n2. IP/端口正确（默认 ${DEFAULT_WSS_PORT}）\n3. 防火墙放行 TCP ${port}`,
+    );
 }
 
-connect();
+connectBtn.addEventListener("click", () => connect());
+disconnectBtn.addEventListener("click", () => {
+  disconnect();
+  setStatus("已断开");
+});
+
+const params = new URLSearchParams(location.search);
+const hostFromUrl = params.get("host");
+const portFromUrl = params.get("port");
+if (portFromUrl) portInput.value = portFromUrl;
+
+const autoHost = hostFromUrl || embeddedPortalHost();
+if (autoHost) {
+  hostInput.value = autoHost;
+  connect();
+}

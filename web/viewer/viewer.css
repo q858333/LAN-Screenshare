@@ -36,6 +36,61 @@ h1 {
   font-size: 0.9rem;
 }
 
+.hint code {
+  font-size: 0.85em;
+  color: #93c5fd;
+}
+
+.connect-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: flex-end;
+  margin: 1rem 0;
+}
+
+.field {
+  flex: 1;
+  min-width: 10rem;
+}
+
+.field-narrow {
+  flex: 0 0 6rem;
+  min-width: 5rem;
+}
+
+label {
+  display: block;
+  font-size: 0.8rem;
+  color: #9aa0a6;
+  margin-bottom: 0.25rem;
+}
+
+input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.5rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid #3c4454;
+  background: #0f1115;
+  color: inherit;
+}
+
+button {
+  border: none;
+  border-radius: 8px;
+  padding: 0.55rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: #3b82f6;
+  color: #fff;
+}
+
+button.secondary {
+  background: #2a2f3a;
+  color: #e8eaed;
+}
+
 .status {
   font-family: ui-monospace, Menlo, monospace;
   font-size: 0.85rem;
