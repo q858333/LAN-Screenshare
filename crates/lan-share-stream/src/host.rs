@@ -65,12 +65,10 @@ impl HostSession {
         });
 
         let cfg_web = config.clone();
-        let mut stop_web = stop_rx.clone();
-        tokio::spawn(async move {
-            if let Err(e) = web_portal::start(cfg_web, stop_web).await {
-                warn!("web portal ended: {e:#}");
-            }
-        });
+        let stop_web = stop_rx.clone();
+        web_portal::start(cfg_web, stop_web)
+            .await
+            .context("start web viewer portal (HTTPS)")?;
 
         Ok(HostSessionHandle {
             stop: stop_tx,

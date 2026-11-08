@@ -6,12 +6,31 @@ const hostInput = document.getElementById("host-input");
 const portInput = document.getElementById("port-input");
 const connectBtn = document.getElementById("connect-btn");
 const disconnectBtn = document.getElementById("disconnect-btn");
+const certBtn = document.getElementById("cert-btn");
 
 let ws;
 let pc;
 
 function setStatus(text) {
   statusEl.textContent = text;
+}
+
+function currentHostPort() {
+  const host = hostInput.value.trim();
+  const port = Number(portInput.value) || DEFAULT_WSS_PORT;
+  return { host, port };
+}
+
+function openCertTrustPage() {
+  const { host, port } = currentHostPort();
+  if (!host) {
+    setStatus("请先填写分享端 IP，再打开证书信任页面");
+    return;
+  }
+  window.open(`https://${host}:${port}/`, "_blank", "noopener,noreferrer");
+  setStatus(
+    `请在新标签页接受证书警告后关闭该页，再回到这里点「连接」。\n目标：https://${host}:${port}/`,
+  );
 }
 
 function isGitHubPages() {
@@ -111,8 +130,7 @@ function disconnect() {
 }
 
 function connect() {
-  const host = hostInput.value.trim();
-  const port = Number(portInput.value) || DEFAULT_WSS_PORT;
+  const { host, port } = currentHostPort();
   if (!host) {
     setStatus("请输入分享端 IP");
     return;
@@ -135,11 +153,15 @@ function connect() {
   ws.onclose = () => appendStatus("信令连接已关闭");
   ws.onerror = () =>
     setStatus(
-      `信令连接失败。\n请确认：\n1. 分享端已「启动分享」\n2. IP/端口正确（默认 ${DEFAULT_WSS_PORT}）\n3. 防火墙放行 TCP ${port}`,
+      `信令连接失败（多为证书未信任或网络不通）。\n` +
+        `1. 若从 GitHub Pages 打开：先点「打开 HTTPS 并信任」，在新页接受证书后再连接\n` +
+        `2. 分享端已「启动分享」，IP 为分享端界面显示的局域网地址（端口 ${DEFAULT_WSS_PORT}，勿用 17890）\n` +
+        `3. 观看端与分享端同一局域网；分享端防火墙放行 TCP ${port} 与 WebRTC UDP`,
     );
 }
 
 connectBtn.addEventListener("click", () => connect());
+certBtn?.addEventListener("click", () => openCertTrustPage());
 disconnectBtn.addEventListener("click", () => {
   disconnect();
   setStatus("已断开");

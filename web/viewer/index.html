@@ -10,7 +10,11 @@
     <main>
       <h1>LAN 屏幕共享 <span class="tag">网页观看</span></h1>
       <p class="hint">
-        分享端需运行桌面客户端并<strong>启动分享</strong>。连接 <code>wss://分享端IP:17891</code> 时若提示证书不受信任，在浏览器中允许继续即可。
+        分享端需运行桌面客户端并<strong>启动分享</strong>。端口必须为 <strong>17891</strong>（不是桌面观看端的 17890）。
+      </p>
+      <p class="hint cert-hint" id="cert-hint">
+        从 GitHub Pages 打开时，须先在<strong>本机浏览器</strong>信任分享端证书：填写 IP 后点
+        <button type="button" id="cert-btn" class="linkish">打开 HTTPS 并信任</button>，在出现警告的页面选择继续访问，再回到此处点「连接」。
       </p>
       <div class="connect-row">
         <div class="field">

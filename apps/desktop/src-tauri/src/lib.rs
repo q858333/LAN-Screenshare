@@ -154,6 +154,7 @@ fn viewer_status(state: State<'_, AppState>) -> Result<ViewerStatus, String> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    lan_share_stream::init_rustls_crypto_provider();
     tracing_subscriber::fmt()
         .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
         .init();

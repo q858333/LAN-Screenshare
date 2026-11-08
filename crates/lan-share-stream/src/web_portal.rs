@@ -27,8 +27,6 @@ pub async fn start(config: HostSessionConfig, mut stop: watch::Receiver<bool>) -
 
     let app = app_router(config);
 
-    info!(%bind, "web viewer portal listening (HTTPS)");
-
     let handle = axum_server::Handle::new();
     let handle_shutdown = handle.clone();
     tokio::spawn(async move {
@@ -36,11 +34,21 @@ pub async fn start(config: HostSessionConfig, mut stop: watch::Receiver<bool>) -
         handle_shutdown.graceful_shutdown(None);
     });
 
-    axum_server::bind_rustls(bind, tls)
-        .handle(handle)
-        .serve(app.into_make_service())
+    let server = axum_server::bind_rustls(bind, tls)
+        .handle(handle.clone())
+        .serve(app.into_make_service());
+
+    tokio::spawn(async move {
+        if let Err(e) = server.await {
+            tracing::error!("web portal server: {e:#}");
+        }
+    });
+
+    handle
+        .listening()
         .await
-        .context("web portal server")?;
+        .with_context(|| format!("bind web viewer HTTPS on {bind}"))?;
+    info!(%bind, "web viewer portal listening (HTTPS)");
 
     Ok(())
 }
@@ -98,7 +106,8 @@ async fn handle_web_socket(socket: WebSocket, config: HostSessionConfig) {
 }
 
 async fn rustls_config() -> Result<RustlsConfig> {
-    let mut names = vec!["localhost".to_string()];
+    crate::init_rustls_crypto_provider();
+    let mut names = vec!["localhost".to_string(), "127.0.0.1".to_string()];
     names.extend(net::list_lan_ipv4());
     let cert = rcgen::generate_simple_self_signed(names).context("generate self-signed cert")?;
     RustlsConfig::from_pem(

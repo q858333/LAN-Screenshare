@@ -41,6 +41,20 @@ h1 {
   color: #93c5fd;
 }
 
+.cert-hint {
+  margin-top: 0.35rem;
+}
+
+button.linkish {
+  display: inline;
+  padding: 0.1rem 0.35rem;
+  font-size: inherit;
+  font-weight: 600;
+  background: transparent;
+  color: #93c5fd;
+  text-decoration: underline;
+}
+
 .connect-row {
   display: flex;
   flex-wrap: wrap;
