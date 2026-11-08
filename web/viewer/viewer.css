@@ -120,3 +120,65 @@ button.secondary {
   border-radius: 10px;
   border: 1px solid #2a2f3a;
 }
+
+.diag-section {
+  margin-top: 1.25rem;
+}
+
+.diag-toggle {
+  width: 100%;
+  text-align: left;
+}
+
+.diag-panel {
+  margin-top: 0.65rem;
+  padding: 0.75rem;
+  border: 1px solid #2a2f3a;
+  border-radius: 10px;
+  background: #12151c;
+}
+
+.diag-panel[hidden] {
+  display: none;
+}
+
+.diag-hint {
+  margin: 0 0 0.5rem;
+}
+
+.diag-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.diag-follow {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: #9aa0a6;
+  cursor: pointer;
+}
+
+.diag-follow input {
+  width: auto;
+}
+
+.diag-view {
+  margin: 0;
+  max-height: min(40vh, 320px);
+  overflow: auto;
+  padding: 0.65rem;
+  background: #0a0c10;
+  border: 1px solid #2a2f3a;
+  border-radius: 8px;
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: #aeb4bb;
+  white-space: pre-wrap;
+  word-break: break-word;
+}

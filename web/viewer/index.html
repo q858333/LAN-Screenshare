@@ -30,6 +30,23 @@
       </div>
       <div id="status" class="status">请输入分享端 IP 并点击连接</div>
       <video id="video" autoplay playsinline muted></video>
+      <section class="diag-section" aria-label="诊断日志">
+        <button type="button" id="diag-toggle" class="secondary diag-toggle" aria-expanded="false">
+          诊断日志
+        </button>
+        <div id="diag-panel" class="diag-panel" hidden>
+          <p class="hint diag-hint">信令 / WebRTC / ICE 事件（仅本机浏览器，不上传）。出问题时点「复制」发给维护者。</p>
+          <div class="diag-toolbar">
+            <button type="button" id="diag-copy" class="secondary">复制</button>
+            <button type="button" id="diag-clear" class="secondary">清空</button>
+            <label class="diag-follow">
+              <input type="checkbox" id="diag-follow" checked />
+              自动滚动
+            </label>
+          </div>
+          <pre id="diag-view" class="diag-view"></pre>
+        </div>
+      </section>
       <p class="foot">仅观看 · 无远程控制 · 系统声音尚未支持</p>
     </main>
     <script src="viewer.js"></script>
