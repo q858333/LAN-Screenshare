@@ -233,11 +233,16 @@ function connect() {
   };
   ws.onerror = () => {
     diagLog("error", "WebSocket 错误（多为证书未信任或 TCP 不通）");
+    const trust = `https://${host}:${port}/`;
+    const pagesHint = isGitHubPages()
+      ? `【从 GitHub Pages 连接必做】先在同一浏览器新标签打开：\n${trust}\n接受证书警告后关掉该标签，再回到本页点「连接」。\n（未信任时 WSS 会直接失败，close=1006，不会有弹窗）\n\n`
+      : "";
     setStatus(
-      `信令连接失败（多为证书未信任或网络不通）。\n` +
-        `1. 若从 GitHub Pages 打开：先点「打开 HTTPS 并信任」，在新页接受证书后再连接\n` +
-        `2. 分享端已「启动分享」，IP 为分享端界面显示的局域网地址（端口 ${DEFAULT_WSS_PORT}，勿用 17890）\n` +
-        `3. 观看端与分享端同一局域网；分享端防火墙放行 TCP ${port} 与 WebRTC UDP`,
+      pagesHint +
+        `信令连接失败。\n` +
+        `1. 分享端已「启动分享」，IP/端口正确（${DEFAULT_WSS_PORT}，勿用 17890）\n` +
+        `2. 观看端与分享端同一局域网；防火墙放行 TCP ${port}\n` +
+        `3. 可先浏览器访问 ${trust} 确认能打开页面`,
     );
   };
 }
