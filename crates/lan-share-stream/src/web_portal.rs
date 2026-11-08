@@ -78,6 +78,7 @@ fn app_router(config: HostSessionConfig) -> Router {
 }
 
 async fn handle_web_socket(socket: WebSocket, config: HostSessionConfig) {
+    info!("网页观看端 WebSocket 已连接");
     let (mut write, mut read) = socket.split();
     let (tx_in, rx_in) = mpsc::unbounded_channel::<String>();
     let (tx_out, mut rx_out) = mpsc::unbounded_channel::<String>();

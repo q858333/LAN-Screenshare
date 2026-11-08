@@ -47,7 +47,7 @@ function embeddedPortalHost() {
 
 function createPeerConnection() {
   const conn = new RTCPeerConnection({
-    iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+    iceServers: [],
   });
 
   conn.ontrack = (ev) => {
@@ -72,6 +72,14 @@ function createPeerConnection() {
 
   conn.onconnectionstatechange = () => {
     appendStatus(`WebRTC：${conn.connectionState}`);
+    if (conn.connectionState === "failed") {
+      appendStatus(
+        "媒体连接失败：请用 Chrome/Edge；系统防火墙允许本应用 UDP；本机试 127.0.0.1；跨设备试局域网 IP。",
+      );
+    }
+  };
+  conn.oniceconnectionstatechange = () => {
+    appendStatus(`ICE：${conn.iceConnectionState}`);
   };
 
   return conn;

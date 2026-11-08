@@ -15,9 +15,39 @@ body {
 }
 
 #app {
-  max-width: 720px;
+  max-width: 820px;
   margin: 0 auto;
   padding: 2rem 1.5rem 3rem;
+}
+
+.log-view {
+  margin: 0.75rem 0 0;
+  padding: 0.75rem;
+  max-height: min(52vh, 420px);
+  overflow: auto;
+  background: #0a0c10;
+  border: 1px solid #2a2f3a;
+  border-radius: 8px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: #c4c7c5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.log-follow {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: #9aa0a6;
+  margin-top: 0.65rem;
+  cursor: pointer;
+}
+
+.log-follow input {
+  width: auto;
 }
 
 h1 {

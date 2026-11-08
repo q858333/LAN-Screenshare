@@ -8,7 +8,7 @@ use lan_share_core::{HostSessionConfig, SignalingMessage};
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::{mpsc, Mutex};
-use tracing::warn;
+use tracing::{info, warn};
 use webrtc::media::Sample;
 use webrtc::rtp_transceiver::rtp_codec::RTCRtpCodecCapability;
 use webrtc::track::track_local::track_local_static_sample::TrackLocalStaticSample;
@@ -63,6 +63,7 @@ pub async fn run_host_viewer_session(
         sdp: offer.sdp,
     })?)
     .await?;
+    info!(%stream_w, %stream_h, "已发送 WebRTC Offer");
 
     let capturer = Arc::new(Mutex::new(capturer));
     let fps = config.target_fps.max(1);
@@ -86,6 +87,7 @@ pub async fn run_host_viewer_session(
                     send(serde_json::to_string(&reply)?).await?;
                 }
                 if is_answer && !pump_started {
+                    info!("收到 Answer，开始推送 H.264 屏幕流");
                     pump_started = true;
                     let capturer = Arc::clone(&capturer);
                     let pump_track = Arc::clone(&pump_track);

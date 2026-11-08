@@ -51,7 +51,7 @@ impl HostSession {
         let listener = TcpListener::bind(&bind)
             .await
             .with_context(|| format!("bind signaling server on {bind}"))?;
-        info!(%bind, "signaling server listening (desktop viewer)");
+        info!(%bind, "桌面观看信令已监听 (ws://0.0.0.0:{})", config.port);
 
         let addrs = Arc::new(net::list_lan_ipv4());
         let (stop_tx, stop_rx) = watch::channel(false);
@@ -69,6 +69,7 @@ impl HostSession {
         web_portal::start(cfg_web, stop_web)
             .await
             .context("start web viewer portal (HTTPS)")?;
+        info!(web_port = config.web_port, "网页观看门户 (HTTPS/WSS) 已就绪");
 
         Ok(HostSessionHandle {
             stop: stop_tx,

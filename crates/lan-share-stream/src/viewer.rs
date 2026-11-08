@@ -119,7 +119,7 @@ async fn run_viewer(
     }));
 
     pc.on_peer_connection_state_change(Box::new(move |s: RTCPeerConnectionState| {
-        info!(?s, "viewer peer state");
+        info!(?s, "观看端 WebRTC 连接状态");
         Box::pin(async {})
     }));
 
