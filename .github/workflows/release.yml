@@ -63,6 +63,64 @@ jobs:
         shell: pwsh
         run: git config --global core.longpaths true
 
+      - name: Cache Tauri bundler tools (NSIS)
+        if: matrix.platform == 'windows-latest'
+        uses: actions/cache@v4
+        with:
+          path: ~\AppData\Local\tauri
+          key: tauri-bundler-${{ runner.os }}-nsis-3.13-v2
+          restore-keys: |
+            tauri-bundler-${{ runner.os }}-nsis-
+
+      - name: Prefetch NSIS toolchain (Windows)
+        if: matrix.platform == 'windows-latest'
+        shell: pwsh
+        run: |
+          $tauriRoot = Join-Path $env:LOCALAPPDATA "tauri"
+          $nsisDir = Join-Path $tauriRoot "NSIS"
+          $makensis = Join-Path $nsisDir "makensis.exe"
+          if (Test-Path $makensis) {
+            Write-Host "NSIS already present at $nsisDir"
+          } else {
+            New-Item -ItemType Directory -Force -Path $tauriRoot | Out-Null
+            $zip = Join-Path $tauriRoot "nsis-3.13.zip"
+            $uri = "https://github.com/tauri-apps/binary-releases/releases/download/nsis-3.13/nsis-3.13.zip"
+            $max = 6
+            for ($i = 1; $i -le $max; $i++) {
+              try {
+                Write-Host "Downloading NSIS (attempt $i/$max)..."
+                curl.exe -fSL --connect-timeout 60 --max-time 600 --retry 3 --retry-delay 15 -o $zip $uri
+                Expand-Archive -Path $zip -DestinationPath $tauriRoot -Force
+                $extracted = Join-Path $tauriRoot "nsis-3.13"
+                if (Test-Path $nsisDir) { Remove-Item -Recurse -Force $nsisDir }
+                Rename-Item $extracted "NSIS"
+                Remove-Item $zip -Force -ErrorAction SilentlyContinue
+                break
+              } catch {
+                Remove-Item $zip -Force -ErrorAction SilentlyContinue
+                if ($i -eq $max) { throw $_ }
+                Start-Sleep -Seconds 45
+              }
+            }
+          }
+          $pluginDir = Join-Path $nsisDir "Plugins\x86-unicode\additional"
+          New-Item -ItemType Directory -Force -Path $pluginDir | Out-Null
+          $dll = Join-Path $pluginDir "nsis_tauri_utils.dll"
+          if (-not (Test-Path $dll)) {
+            $utilsUrl = "https://github.com/tauri-apps/nsis-tauri-utils/releases/download/nsis_tauri_utils-v0.5.3/nsis_tauri_utils.dll"
+            $max = 6
+            for ($i = 1; $i -le $max; $i++) {
+              try {
+                Write-Host "Downloading nsis_tauri_utils (attempt $i/$max)..."
+                curl.exe -fSL --connect-timeout 60 --max-time 300 --retry 3 --retry-delay 15 -o $dll $utilsUrl
+                break
+              } catch {
+                if ($i -eq $max) { throw $_ }
+                Start-Sleep -Seconds 30
+              }
+            }
+          }
+
       - name: Install frontend deps
         working-directory: apps/desktop
         run: npm ci
