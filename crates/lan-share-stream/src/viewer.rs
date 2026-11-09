@@ -1,6 +1,6 @@
 use crate::media::H264Decoder;
 use crate::webrtc::{apply_remote_message, build_peer_connection, wire_ice_candidates};
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use bytes::Bytes;
 use futures_util::{SinkExt, StreamExt};
 use jpeg_encoder::{ColorType, Encoder as JpegEncoder};
@@ -183,8 +183,20 @@ async fn run_viewer(
         ViewerProgressPhase::Running,
     )
     .await;
-    let (ws, _) = connect_async(url).await.with_context(|| {
-        format!("无法连接信令 {url}。请确认分享端已点「启动分享」，IP 正确，且两端在同一局域网。桌面观看端只需填 IP，默认端口 17890。")
+    let (ws, _) = connect_async(url).await.map_err(|err| {
+        let raw = err.to_string();
+        if raw.contains("Handshake not finished")
+            || raw.contains("Socket is not connected")
+            || raw.contains("os error 57")
+        {
+            anyhow::anyhow!(
+                "无法完成信令握手。分享端的 Mac 拒绝了局域网连接。请在分享端打开「系统设置 → 隐私与安全性 → 本地网络」，允许 LAN-Screenshare，然后重新点「启动分享」。"
+            )
+        } else {
+            anyhow::anyhow!(
+                "无法连接信令 {url}。请确认分享端已点「启动分享」，IP 正确，且两端在同一局域网。桌面观看端只需填 IP，默认端口 17890。: {raw}"
+            )
+        }
     })?;
     info!(%url, "connected to host signaling");
     {

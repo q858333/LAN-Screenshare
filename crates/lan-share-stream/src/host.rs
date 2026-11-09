@@ -54,6 +54,11 @@ impl HostSession {
         info!(%bind, "桌面观看信令已监听 (ws://0.0.0.0:{})", config.port);
 
         let addrs = Arc::new(net::list_lan_ipv4());
+        let probe_addrs = addrs.as_ref().clone();
+        tokio::task::spawn_blocking(move || poke_local_network(&probe_addrs))
+            .await
+            .ok();
+        info!("若系统弹出「本地网络」授权，请选择允许；观看端需要在允许后重新连接");
         let (stop_tx, stop_rx) = watch::channel(false);
 
         let cfg_signaling = config.clone();
@@ -105,6 +110,20 @@ async fn run_host_loop(
         }
     }
     Ok(())
+}
+
+fn poke_local_network(addrs: &[String]) {
+    if let Ok(sock) = std::net::UdpSocket::bind("0.0.0.0:0") {
+        let _ = sock.set_broadcast(true);
+        let _ = sock.send_to(b"lan-screenshare", "255.255.255.255:5353");
+    }
+    for ip in addrs {
+        let Ok(ip_addr) = ip.parse::<std::net::Ipv4Addr>() else {
+            continue;
+        };
+        let target = std::net::SocketAddr::from((ip_addr, 9));
+        let _ = std::net::TcpStream::connect_timeout(&target, std::time::Duration::from_millis(400));
+    }
 }
 
 fn local_network_denied(err: &impl std::fmt::Display) -> bool {
