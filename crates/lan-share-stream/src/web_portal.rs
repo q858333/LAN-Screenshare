@@ -14,6 +14,7 @@ use tokio::sync::{mpsc, watch};
 use tower_http::cors::CorsLayer;
 use tracing::info;
 
+// 页面和脚本打进二进制；本机门户打开时，信令必须使用地址栏主机，避免证书主机不一致。
 const INDEX_HTML: &str = include_str!("../../../web/viewer/index.html");
 const VIEWER_CSS: &str = include_str!("../../../web/viewer/viewer.css");
 const VIEWER_JS: &str = include_str!("../../../web/viewer/viewer.js");

@@ -107,33 +107,68 @@ async fn run_host_loop(
     Ok(())
 }
 
+fn local_network_denied(err: &impl std::fmt::Display) -> bool {
+    let raw = err.to_string();
+    raw.contains("Socket is not connected") || raw.contains("os error 57")
+}
+
 async fn handle_desktop_viewer(stream: TcpStream, config: HostSessionConfig) -> Result<()> {
-    let ws = accept_async(stream).await.context("websocket handshake")?;
+    let ws = accept_async(stream).await.map_err(|err| {
+        if local_network_denied(&err) {
+            anyhow::anyhow!(
+                "系统拒绝了局域网连接。请在系统设置 → 隐私与安全性 → 本地网络中允许 LAN-Screenshare，然后重新点「启动分享」。"
+            )
+        } else {
+            anyhow::anyhow!("websocket handshake: {err}")
+        }
+    })?;
     let (mut write, mut read) = ws.split();
     let (tx_in, rx_in) = mpsc::unbounded_channel::<String>();
     let (tx_out, mut rx_out) = mpsc::unbounded_channel::<String>();
 
     let write_task = tokio::spawn(async move {
         while let Some(text) = rx_out.recv().await {
-            if write
-                .send(Message::Text(text))
-                .await
-                .is_err()
-            {
-                break;
+            if write.send(Message::Text(text)).await.is_err() {
+                return;
+            }
+        }
+        let _ = write.send(Message::Close(None)).await;
+    });
+
+    let read_task = tokio::spawn(async move {
+        loop {
+            match read.next().await {
+                Some(Ok(Message::Text(text))) => {
+                    if tx_in.send(text).is_err() {
+                        break;
+                    }
+                }
+                Some(Ok(Message::Close(_))) => {
+                    info!("观看端关闭了信令");
+                    break;
+                }
+                Some(Ok(_)) => {}
+                Some(Err(err)) => {
+                    if local_network_denied(&err) {
+                        warn!(
+                            "读取观看端信令失败：系统拒绝了局域网连接。请允许「本地网络」后重新启动分享。"
+                        );
+                    } else {
+                        warn!("读取观看端信令失败：{err:#}");
+                    }
+                    break;
+                }
+                None => break,
             }
         }
     });
 
-    let read_task = tokio::spawn(async move {
-        while let Some(Ok(msg)) = read.next().await {
-            let Message::Text(text) = msg else { continue };
-            let _ = tx_in.send(text);
-        }
-    });
-
     let result = run_host_viewer_session(config, rx_in, tx_out).await;
-    write_task.abort();
+    match tokio::time::timeout(std::time::Duration::from_secs(2), write_task).await {
+        Ok(Ok(())) => {}
+        Ok(Err(err)) => warn!("signaling writer stopped: {err}"),
+        Err(_) => warn!("signaling writer did not finish before timeout"),
+    }
     read_task.abort();
     result
 }

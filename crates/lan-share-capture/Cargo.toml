@@ -12,5 +12,5 @@ tracing = { workspace = true }
 scrap = "0.5"
 cpal = "0.15"
 
-[target.'cfg(target_os = "macos")'.dependencies]
-scrap = "0.5"
+[build-dependencies]
+cc = "1"

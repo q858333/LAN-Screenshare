@@ -47,6 +47,13 @@ function currentHostPort() {
   return { host, port };
 }
 
+function pagePortalTarget() {
+  const host = embeddedPortalHost();
+  if (!host) return null;
+  const port = Number(location.port) || DEFAULT_WSS_PORT;
+  return { host, port };
+}
+
 function openCertTrustPage() {
   const { host, port } = currentHostPort();
   if (!host) {
@@ -204,7 +211,17 @@ function disconnect() {
 }
 
 function connect() {
-  const { host, port } = currentHostPort();
+  const embedded = pagePortalTarget();
+  const typed = currentHostPort();
+  if (embedded && typed.host && typed.host !== embedded.host) {
+    diagLog(
+      "info",
+      `页面由本机分享端提供，信令改用 ${embedded.host}。地址栏是 ${embedded.host} 时，不能改去连 ${typed.host}，否则证书对不上。`,
+    );
+    hostInput.value = embedded.host;
+    portInput.value = String(embedded.port);
+  }
+  const { host, port } = embedded || typed;
   if (!host) {
     setStatus("请输入分享端 IP");
     return;
@@ -287,8 +304,17 @@ const hostFromUrl = params.get("host");
 const portFromUrl = params.get("port");
 if (portFromUrl) portInput.value = portFromUrl;
 
-const autoHost = hostFromUrl || embeddedPortalHost();
-if (autoHost) {
-  hostInput.value = autoHost;
+const portal = pagePortalTarget();
+if (portal) {
+  const certHint = document.getElementById("cert-hint");
+  if (certHint) certHint.hidden = true;
+  hostInput.value = portal.host;
+  portInput.value = String(portal.port);
   connect();
+} else {
+  const autoHost = hostFromUrl || embeddedPortalHost();
+  if (autoHost) {
+    hostInput.value = autoHost;
+    connect();
+  }
 }

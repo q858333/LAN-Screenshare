@@ -1,12 +1,10 @@
-use crate::net;
 use anyhow::Result;
 use std::sync::Arc;
 use webrtc::api::interceptor_registry::register_default_interceptors;
 use webrtc::api::media_engine::{MediaEngine, MIME_TYPE_H264};
 use webrtc::api::setting_engine::SettingEngine;
 use webrtc::api::APIBuilder;
-use webrtc::ice_transport::ice_candidate_type::RTCIceCandidateType;
-use webrtc::ice_transport::ice_server::RTCIceServer;
+use webrtc::ice::mdns::MulticastDnsMode;
 use webrtc::interceptor::registry::Registry;
 use webrtc::peer_connection::configuration::RTCConfiguration;
 use webrtc::peer_connection::RTCPeerConnection;
@@ -23,9 +21,9 @@ pub async fn build_peer_connection() -> Result<Arc<RTCPeerConnection>> {
     registry = register_default_interceptors(registry, &mut media_engine)?;
 
     let mut setting_engine = SettingEngine::default();
-    let mut ice_ips = vec!["127.0.0.1".to_string()];
-    ice_ips.extend(net::list_lan_ipv4());
-    setting_engine.set_nat_1to1_ips(ice_ips, RTCIceCandidateType::Host);
+    // 多个本机地址不能当成同一个 1:1 NAT 映射，否则建连会直接失败。
+    // 关闭 mDNS，让观看端拿到真实局域网地址。
+    setting_engine.set_ice_multicast_dns_mode(MulticastDnsMode::Disabled);
 
     let api = APIBuilder::new()
         .with_media_engine(media_engine)

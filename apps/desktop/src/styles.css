@@ -146,3 +146,96 @@ button:disabled {
   color: #93c5fd;
   margin-left: 0.35rem;
 }
+
+.field-hint {
+  color: #9aa0a6;
+  font-size: 0.85rem;
+  margin: 0.45rem 0 0;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.modal-backdrop[hidden] {
+  display: none !important;
+}
+
+.modal-card {
+  width: min(440px, 100%);
+  background: #171a21;
+  border: 1px solid #2a2f3a;
+  border-radius: 12px;
+  padding: 1.25rem 1.35rem;
+}
+
+.modal-card h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.modal-count {
+  margin: 0.35rem 0 0.75rem;
+  color: #93c5fd;
+  font-weight: 650;
+}
+
+.modal-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: #2a2f3a;
+  overflow: hidden;
+}
+
+.modal-bar > div {
+  height: 100%;
+  width: 0;
+  background: #3b82f6;
+}
+
+.modal-bar > div.done {
+  background: #22c55e;
+}
+
+.modal-bar > div.error {
+  background: #ef4444;
+}
+
+.step-list {
+  list-style: none;
+  margin: 0.85rem 0;
+  padding: 0;
+}
+
+.step-list li {
+  padding: 0.28rem 0;
+  color: #6b7280;
+}
+
+.step-list li.done {
+  color: #86efac;
+}
+
+.step-list li.active {
+  color: #e8eaed;
+  font-weight: 650;
+}
+
+.step-list li.error {
+  color: #fca5a5;
+  font-weight: 650;
+}
+
+.modal-detail {
+  margin: 0;
+  white-space: pre-wrap;
+  color: #c4c7c5;
+  font-size: 0.92rem;
+}

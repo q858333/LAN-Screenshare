@@ -26,8 +26,19 @@ pub async fn run_host_viewer_session(
         }
     };
 
-    let capturer = open_primary_display(config.target_fps, config.include_audio)
-        .context("open screen capture")?;
+    let capturer = match open_primary_display(config.target_fps, config.include_audio) {
+        Ok(capturer) => capturer,
+        Err(err) => {
+            let message = format!("无法采集屏幕：{err}");
+            let _ = send(
+                serde_json::to_string(&SignalingMessage::Error {
+                    message: message.clone(),
+                })?,
+            )
+            .await;
+            anyhow::bail!("{message}");
+        }
+    };
     let format = capturer.format();
     let (stream_w, stream_h) = fit_width_dims(format.width, format.height, config.max_width);
 

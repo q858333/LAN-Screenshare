@@ -8,7 +8,9 @@ mod webrtc;
 
 pub use host::{HostSession, HostSessionHandle};
 pub use lan_share_core::ViewerFrame;
-pub use viewer::{ViewerSession, ViewerSessionHandle};
+pub use viewer::{
+    ViewerProgress, ViewerProgressPhase, ViewerSession, ViewerSessionHandle, VIEWER_PROGRESS_TOTAL,
+};
 
 use std::sync::Once;
 

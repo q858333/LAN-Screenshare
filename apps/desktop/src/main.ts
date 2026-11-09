@@ -12,11 +12,36 @@ interface HostStatus {
   web_viewer_urls: string[];
 }
 
+interface ViewerProgress {
+  generation: number;
+  step: number;
+  total: number;
+  title: string;
+  detail: string;
+  phase: "running" | "done" | "error";
+}
+
 interface ViewerStatus {
   connected: boolean;
   host_info: string | null;
   last_error: string | null;
+  progress: ViewerProgress | null;
 }
+
+const CONNECT_STEP_TITLES = [
+  "检查地址",
+  "连接信令",
+  "建立媒体通道",
+  "获取分享端信息",
+  "协商视频",
+  "接收画面",
+];
+
+let connectBusy = false;
+let activeGeneration: number | null = null;
+const pendingProgress: ViewerProgress[] = [];
+let progressUnlisten: UnlistenFn | undefined;
+let progressHideTimer: number | undefined;
 
 interface ViewerFrameEvent {
   width: number;
@@ -103,8 +128,9 @@ function renderPanel() {
   } else if (role === "viewer") {
     panel.innerHTML = `
       <div class="card">
-        <label for="host-ip">分享端 IP 地址</label>
-        <input id="host-ip" type="text" placeholder="例如 192.168.1.12" />
+        <label for="host-ip">分享端 IP</label>
+        <input id="host-ip" type="text" placeholder="例如 192.168.1.12" autocomplete="off" />
+        <p class="field-hint">不用填写端口。未写端口时自动使用 17890。只有分享端改过端口，才写成 192.168.1.12:17890。</p>
         <div class="row">
           <button id="viewer-connect">连接</button>
           <button id="viewer-disconnect" class="secondary">断开</button>
@@ -113,7 +139,9 @@ function renderPanel() {
         <canvas id="viewer-canvas" width="1280" height="720" style="width:100%;margin-top:1rem;background:#000;border-radius:8px"></canvas>
       </div>
     `;
-    document.getElementById("viewer-connect")!.onclick = () => void connectViewer();
+    const connectButton = document.getElementById("viewer-connect") as HTMLButtonElement;
+    connectButton.disabled = connectBusy;
+    connectButton.onclick = () => void connectViewer();
     document.getElementById("viewer-disconnect")!.onclick = () => void disconnectViewer();
   } else {
     panel.innerHTML = `
@@ -209,13 +237,172 @@ async function stopHost() {
 
 async function connectViewer() {
   const ip = (document.getElementById("host-ip") as HTMLInputElement).value.trim();
-  await invoke("connect_viewer", { hostAddr: ip });
+  pendingProgress.length = 0;
+  activeGeneration = null;
+  setConnectBusy(true);
+  if (!ip) {
+    applyProgress(localProgress(1, "error", "请输入分享端 IP。不用填写端口，默认是 17890。"));
+    return;
+  }
+  applyProgress(
+    localProgress(1, "running", `正在检查 ${ip}。不用填写端口，默认使用 17890。`),
+  );
+  let generation: number;
+  try {
+    generation = await invoke<number>("connect_viewer", { hostAddr: ip });
+  } catch (e) {
+    applyProgress(localProgress(1, "error", String(e)));
+    const status = document.getElementById("viewer-status");
+    if (status) status.textContent = String(e);
+    return;
+  }
+  activeGeneration = generation;
+  const queued = pendingProgress.splice(0);
+  for (const progress of queued) {
+    if (progress.generation === generation) applyProgress(progress);
+  }
   await refreshStatus();
 }
 
 async function disconnectViewer() {
-  await invoke("disconnect_viewer");
+  activeGeneration = -1;
+  pendingProgress.length = 0;
+  setConnectBusy(false);
+  hideConnectModal();
+  try {
+    await invoke("disconnect_viewer");
+  } catch (e) {
+    const status = document.getElementById("viewer-status");
+    if (status) status.textContent = String(e);
+  }
   await refreshStatus();
+}
+
+function localProgress(
+  step: number,
+  phase: ViewerProgress["phase"],
+  detail: string,
+): ViewerProgress {
+  return {
+    generation: 0,
+    step,
+    total: CONNECT_STEP_TITLES.length,
+    title: CONNECT_STEP_TITLES[step - 1] ?? "检查地址",
+    detail,
+    phase,
+  };
+}
+
+function setConnectBusy(busy: boolean) {
+  connectBusy = busy;
+  const button = document.getElementById("viewer-connect") as HTMLButtonElement | null;
+  if (button) button.disabled = busy;
+}
+
+function ensureConnectModal() {
+  if (document.getElementById("connect-modal")) return;
+  const modal = document.createElement("div");
+  modal.id = "connect-modal";
+  modal.className = "modal-backdrop";
+  modal.hidden = true;
+  modal.innerHTML = `
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="connect-modal-heading">
+      <h2 id="connect-modal-heading">正在连接</h2>
+      <p id="connect-modal-count" class="modal-count">第 1 / 6 步</p>
+      <div class="modal-bar" aria-hidden="true"><div id="connect-modal-fill"></div></div>
+      <ol id="connect-modal-steps" class="step-list"></ol>
+      <p id="connect-modal-detail" class="modal-detail"></p>
+      <p class="field-hint">可以先收起，连接会继续。要取消请点观看页的「断开」。</p>
+      <div class="row">
+        <button type="button" id="connect-modal-close" class="secondary">收起</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  document.getElementById("connect-modal-close")!.addEventListener("click", () => {
+    hideConnectModal();
+  });
+}
+
+function hideConnectModal() {
+  if (progressHideTimer !== undefined) {
+    window.clearTimeout(progressHideTimer);
+    progressHideTimer = undefined;
+  }
+  const modal = document.getElementById("connect-modal");
+  if (modal) modal.hidden = true;
+}
+
+function applyProgress(progress: ViewerProgress) {
+  if (progressHideTimer !== undefined) {
+    window.clearTimeout(progressHideTimer);
+    progressHideTimer = undefined;
+  }
+  ensureConnectModal();
+  const modal = document.getElementById("connect-modal")!;
+  modal.hidden = false;
+  const finished = progress.phase === "done" && progress.step >= progress.total;
+  const failed = progress.phase === "error";
+  const heading = document.getElementById("connect-modal-heading")!;
+  heading.textContent = failed ? "连接失败" : finished ? "已连接" : "正在连接";
+  document.getElementById("connect-modal-count")!.textContent =
+    `第 ${progress.step} / ${progress.total} 步`;
+  document.getElementById("connect-modal-detail")!.textContent = progress.detail;
+  const fill = document.getElementById("connect-modal-fill")!;
+  let ratio = (Math.min(progress.step, progress.total) - (progress.phase === "running" ? 0.4 : 0)) / progress.total;
+  if (finished) ratio = 1;
+  fill.style.width = `${Math.round(Math.max(0.08, Math.min(1, ratio)) * 100)}%`;
+  fill.className = failed ? "error" : finished ? "done" : "";
+  const list = document.getElementById("connect-modal-steps")!;
+  list.replaceChildren();
+  for (let i = 1; i <= progress.total; i += 1) {
+    const item = document.createElement("li");
+    let mark = "○";
+    if (failed && i === progress.step) {
+      item.className = "error";
+      mark = "✕";
+    } else if (i < progress.step || (progress.phase === "done" && i === progress.step)) {
+      item.className = "done";
+      mark = "✓";
+    } else if (i === progress.step) {
+      item.className = "active";
+      mark = "●";
+    }
+    item.textContent = `${mark}  ${i}. ${CONNECT_STEP_TITLES[i - 1] ?? progress.title}`;
+    list.appendChild(item);
+  }
+  const closeButton = document.getElementById("connect-modal-close")!;
+  closeButton.textContent = failed || finished ? "关闭" : "收起";
+  setConnectBusy(!(failed || finished));
+  const status = document.getElementById("viewer-status");
+  if (status && role === "viewer") {
+    status.textContent = failed
+      ? progress.detail
+      : `第 ${progress.step} / ${progress.total} 步：${progress.title}\n${progress.detail}`;
+  }
+  if (finished) {
+    progressHideTimer = window.setTimeout(() => hideConnectModal(), 1200);
+  }
+}
+
+function onViewerProgress(progress: ViewerProgress) {
+  if (activeGeneration === null) {
+    pendingProgress.push(progress);
+    return;
+  }
+  if (progress.generation !== activeGeneration) return;
+  applyProgress(progress);
+}
+
+async function ensureProgressListener() {
+  if (progressUnlisten) return;
+  try {
+    progressUnlisten = await listen<ViewerProgress>("viewer-progress", (event) => {
+      onViewerProgress(event.payload);
+    });
+  } catch (e) {
+    console.warn("进度事件监听不可用", e);
+  }
 }
 
 async function refreshStatus() {
@@ -236,7 +423,17 @@ async function refreshStatus() {
     const st = await invoke<ViewerStatus>("viewer_status");
     const el = document.getElementById("viewer-status");
     if (!el) return;
+    if (st.progress?.phase === "error") {
+      el.textContent = st.last_error ?? st.progress.detail;
+      return;
+    }
+    if (st.progress?.phase === "running") {
+      const head = st.host_info ? `${st.host_info}\n` : "";
+      el.textContent = `${head}第 ${st.progress.step} / ${st.progress.total} 步：${st.progress.title}\n${st.progress.detail}`;
+      return;
+    }
     if (!st.connected) {
+      if (connectBusy) return;
       el.textContent = st.last_error ?? "未连接";
       return;
     }
@@ -291,4 +488,5 @@ function stopLogPoll() {
   }
 }
 
+void ensureProgressListener();
 render();
